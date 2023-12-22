@@ -45,6 +45,7 @@ export class Source extends BaseSource<Params> {
     }
   }
 
+  #lock = new Lock(this.#dictCache);
   async update(paths: string[]): Promise<void> {
     this.#prePaths = JSON.stringify(paths);
 
@@ -54,8 +55,6 @@ export class Source extends BaseSource<Params> {
         cache.active = false;
       }
     }
-
-    const lock = new Lock(this.#dictCache);
 
     await Promise.all(paths.map(async (path) => {
       const stat = await Deno.stat(path);
@@ -79,7 +78,7 @@ export class Source extends BaseSource<Params> {
         });
       }
 
-      await lock.lock((dictCache) => {
+      await this.#lock.lock((dictCache) => {
         dictCache[path] = {
           path,
           mtime: mtime ?? -1,
