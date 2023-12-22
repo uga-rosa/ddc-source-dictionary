@@ -46,7 +46,13 @@ export class Source extends BaseSource<Params> {
   }
 
   #lock = new Lock(this.#dictCache);
+  #onGoing = false;
   async update(paths: string[]): Promise<void> {
+    if (this.#onGoing) {
+      return;
+    }
+    this.#onGoing = true;
+
     this.#prePaths = JSON.stringify(paths);
 
     // Deactivate old caches.
@@ -87,6 +93,8 @@ export class Source extends BaseSource<Params> {
         };
       });
     }));
+
+    this.#onGoing = false;
   }
 
   search(prefix: string, showPath: boolean): Item[] {
