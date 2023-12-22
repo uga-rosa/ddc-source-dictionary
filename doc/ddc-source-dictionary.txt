@@ -1,0 +1,98 @@
+*ddc-source-dictionary.txt*			Dictionary source for ddc.vim
+
+Author:  uga-rosa <uga6603@gmail.com>
+License: MIT License
+
+==============================================================================
+CONTENTS				*ddc-source-dictionary-contents*
+
+Introduction				|ddc-source-dictionary-introduction|
+Install					|ddc-source-dictionary-install|
+Example					|ddc-source-dictionary-examples|
+Params					|ddc-source-dictionary-params|
+
+==============================================================================
+INTRODUCTION				*ddc-source-dictionary-introduction*
+
+Dictionary source for ddc.vim.
+
+
+==============================================================================
+INSTALL					*ddc-source-dictionary-install*
+
+Please install both "ddc.vim" and "denops.vim".
+
+https://github.com/Shougo/ddc.vim
+https://github.com/vim-denops/denops.vim
+
+
+==============================================================================
+EXAMPLE					*ddc-source-dictionary-examples*
+
+>vim
+	call ddc#custom#patch_global('sources', ['dictionary'])
+	call ddc#custom#patch_global('sourceParams', #{
+	      \ dictionary: ${
+	      \   paths: [ '/usr/share/dict/words' ],
+	      \   firstCaseInsensitive: v:true,
+	      \   documentCommand: ['wn', '{{word}}', '-over'],
+	      \  },
+	      \})
+<
+
+
+==============================================================================
+PARAMS					*ddc-source-dictionary-params*
+
+					*ddc-source-dictionary-param-paths*
+paths			(string[])
+	Dictionary paths. The dictionary is in the same format as
+	`/usr/share/dict/words` used in `look` and consists of words separated by
+	whitespace characters.
+
+	The dictionary is updated at initialization and |InsertEnter|. The
+	mtime is checked, so if the dictionary is edited, it is read again.
+
+	Default: []
+
+
+				*ddc-source-dictionary-param-exactLength*
+exactLength		(number)
+	The number of characters to use for forward exact matching in
+	narrowing down the candidates.
+
+	The usual ddc-source returns all possible candidates and narrows them
+	down with ddc-filter, but since the number of candidates for a
+	dictionary is enormous, the source also narrows down the number of
+	candidates to speed up the process.
+
+	Default: 2
+
+
+			*ddc-source-dictionary-param-firstCaseInsensitive*
+firstCaseInsensitive	(boolean)
+	Ignore the leading single capital letter and lowercase letter, collect
+	candidates and correct them. For example, if the dictionary contains
+	the word "first", typing "F" will produce a candidate for "First".
+
+	Default: v:false
+
+
+					*ddc-source-dictionary-param-showPath*
+showPath		(boolean)
+	Add the path of the dictionary containing the item to
+	|ddc-item-attribute-info|.
+
+	Default: v:false
+
+
+				*ddc-source-dictionary-param-documentCommand*
+documentCommand		(string[])
+	Define commands to use for previewer. "{{word}}" is replaced by
+	|ddc-item-attribute-word|.
+
+	Default: []
+
+
+==============================================================================
+vim:tw=78:ts=8:noet:ft=help:norl:
