@@ -5,7 +5,6 @@ import {
   GetPreviewerArguments,
   Item,
   OnEventArguments,
-  OnInitArguments,
   Previewer,
 } from "./deps/ddc.ts";
 import { TextLineStream } from "./deps/std.ts";
@@ -39,11 +38,7 @@ export class Source extends BaseSource<Params> {
   #dictCache: Record<string, Cache> = {};
   #prePaths = "";
 
-  async onInit({ sourceParams }: OnInitArguments<Params>): Promise<void> {
-    await this.update(sourceParams.paths);
-  }
-
-  events = ["InsertEnter"];
+  events = ["Initialize", "InsertEnter"];
   async onEvent({ sourceParams }: OnEventArguments<Params>): Promise<void> {
     if (JSON.stringify(sourceParams.paths) !== this.#prePaths) {
       await this.update(sourceParams.paths);
