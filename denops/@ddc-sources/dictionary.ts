@@ -132,9 +132,9 @@ export class Source extends BaseSource<Params> {
     return Promise.resolve({ items, isIncomplete });
   }
 
-  #Decoder = new TextDecoder();
+  #decoder = new TextDecoder();
   decode(u: Uint8Array): string {
-    return this.#Decoder.decode(u);
+    return this.#decoder.decode(u);
   }
 
   getPreviewer({
@@ -143,9 +143,8 @@ export class Source extends BaseSource<Params> {
   }: GetPreviewerArguments<Params>): Previewer {
     const contents = item.info ? [item.info] : [];
     if (params.documentCommand.length > 0) {
-      const command = params.documentCommand.map((c) =>
-        c === "{{word}}" ? item.word : c
-      );
+      const command = params.documentCommand
+        .map((c) => c === "{{word}}" ? item.word : c);
       const { stdout, stderr } = new Deno.Command(command[0], {
         args: command.slice(1),
       }).outputSync();
