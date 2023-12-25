@@ -5,6 +5,7 @@ import {
   GetPreviewerArguments,
   Item,
   OnEventArguments,
+  OnInitArguments,
   Previewer,
 } from "./deps/ddc.ts";
 import { TextLineStream } from "./deps/std.ts";
@@ -23,19 +24,12 @@ function same(x: unknown, y: unknown): boolean {
   return JSON.stringify(x) === JSON.stringify(y);
 }
 
-type Cache =
-  & {
-    path: string;
-    mtime: number;
-    active: boolean;
-  }
-  & ({
-    trie: Trie;
-    db?: undefined;
-  } | {
-    trie?: undefined;
-    db: Deno.Kv;
-  });
+type Cache = {
+  path: string;
+  mtime: number;
+  active: boolean;
+  trie?: Trie;
+};
 
 type Params = {
   paths: string[];
@@ -51,30 +45,22 @@ export class Source extends BaseSource<Params> {
   #prevPaths: string[] = [];
 
   #db?: Deno.Kv;
-  async maybeDB(path: string): Promise<Deno.Kv | undefined> {
-    try {
-      if (this.#db == null && path) {
-        this.#db = await Deno.openKv(path);
-      }
-      return this.#db;
-    } catch {
-      // failed to open database
-    }
+  async onInit({
+    sourceParams: params,
+  }: OnInitArguments<Params>): Promise<void> {
+    this.#db = await Deno.openKv(params.databasePath);
   }
 
   events = ["Initialize", "InsertEnter"];
   async onEvent({ sourceParams }: OnEventArguments<Params>): Promise<void> {
     if (!same(sourceParams.paths, this.#prevPaths)) {
-      await this.update(
-        sourceParams.paths,
-        await this.maybeDB(sourceParams.databasePath),
-      );
+      await this.update(sourceParams.paths);
     }
   }
 
   #lock = new Lock(this.#dictCache);
   #onGoing = false;
-  async update(paths: string[], db?: Deno.Kv): Promise<void> {
+  async update(paths: string[]): Promise<void> {
     if (this.#onGoing) {
       return;
     }
@@ -100,15 +86,14 @@ export class Source extends BaseSource<Params> {
       }
 
       if (
-        db != null && mtime != null &&
-        (await db.get([path, "mtime"])).value === mtime
+        this.#db != null && mtime != null &&
+        (await this.#db.get([path, "mtime"])).value === mtime
       ) {
         await this.#lock.lock((dictCache) => {
           dictCache[path] = {
             path,
             mtime: mtime ?? -1,
             active: true,
-            db,
           };
         });
         return;
@@ -118,27 +103,26 @@ export class Source extends BaseSource<Params> {
       const lineStream = file.readable
         .pipeThrough(new TextDecoderStream())
         .pipeThrough(new TextLineStream());
-      if (db != null) {
-        let [atm, count] = [db.atomic(), 0];
+      if (this.#db != null) {
+        let [atm, count] = [this.#db.atomic(), 0];
         for await (const line of lineStream) {
           for (const word of line.split(/\s+/)) {
             if (word !== "") {
               atm = atm.set([...word], word);
               if (++count >= 1000) {
                 await atm.commit();
-                [atm, count] = [db.atomic(), 0];
+                [atm, count] = [this.#db.atomic(), 0];
               }
             }
           }
         }
         await atm.commit();
-        await db.set([path, "mtime"], mtime);
+        await this.#db.set([path, "mtime"], mtime);
         await this.#lock.lock((dictCache) => {
           dictCache[path] = {
             path,
             mtime: mtime ?? -1,
             active: true,
-            db,
           };
         });
       } else {
@@ -173,7 +157,7 @@ export class Source extends BaseSource<Params> {
       const info = showPath ? cache.path : "";
       if (cache.trie) {
         cache.trie.search(prefix).forEach((word) => items.push({ word, info }));
-      } else {
+      } else if (this.#db) {
         for await (
           const entry of cache.db.list<string>({ prefix: [...prefix] })
         ) {
