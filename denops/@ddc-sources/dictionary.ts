@@ -80,17 +80,15 @@ export class Source extends BaseSource<Params> {
       const stat = await Deno.stat(path);
       const mtime = stat.mtime?.getTime();
       // If there is no update, the previous cache is used as is.
-      if (mtime != null && this.#dictCache[path]?.mtime === mtime) {
+      if (mtime && this.#dictCache[path]?.mtime === mtime) {
         await this.#lock.lock((dictCache) => {
           dictCache[path].active = true;
         });
         return;
       }
 
-      if (
-        this.#db != null && mtime != null &&
-        (await this.#db.get([path, "mtime"])).value === mtime
-      ) {
+      // If the file has already been registered in the database, there is no need to read the file.
+      if (mtime && (await this.#db?.get([path, "mtime"]))?.value === mtime) {
         await this.#lock.lock((dictCache) => {
           dictCache[path] = {
             path,
@@ -101,17 +99,18 @@ export class Source extends BaseSource<Params> {
         return;
       }
 
+      let trie: Trie | undefined;
       const file = await Deno.open(path);
       const lineStream = file.readable
         .pipeThrough(new TextDecoderStream())
         .pipeThrough(new TextLineStream());
-      if (this.#db != null) {
+      if (this.#db) {
         let [atm, count] = [this.#db.atomic(), 0];
         for await (const line of lineStream) {
           for (const word of line.split(/\s+/)) {
             if (word !== "") {
               atm = atm.set([path, "word", ...word], word);
-              if (++count >= 1000) {
+              if (++count >= 500) {
                 await atm.commit();
                 [atm, count] = [this.#db.atomic(), 0];
               }
@@ -120,15 +119,8 @@ export class Source extends BaseSource<Params> {
         }
         await atm.commit();
         await this.#db.set([path, "mtime"], mtime);
-        await this.#lock.lock((dictCache) => {
-          dictCache[path] = {
-            path,
-            mtime: mtime ?? -1,
-            active: true,
-          };
-        });
       } else {
-        const trie = new Trie();
+        trie = new Trie();
         for await (const line of lineStream) {
           for (const word of line.split(/\s+/)) {
             if (word !== "") {
@@ -136,15 +128,15 @@ export class Source extends BaseSource<Params> {
             }
           }
         }
-        await this.#lock.lock((dictCache) => {
-          dictCache[path] = {
-            path,
-            mtime: mtime ?? -1,
-            active: true,
-            trie,
-          };
-        });
       }
+      await this.#lock.lock((dictCache) => {
+        dictCache[path] = {
+          path,
+          mtime: mtime ?? -1,
+          active: true,
+          trie,
+        };
+      });
     }));
 
     this.#onGoing = false;
