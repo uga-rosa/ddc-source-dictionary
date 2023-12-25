@@ -24,6 +24,11 @@ function same(x: unknown, y: unknown): boolean {
   return JSON.stringify(x) === JSON.stringify(y);
 }
 
+const decoder = new TextDecoder();
+function splitLines(u: Uint8Array): string[] {
+  return decoder.decode(u).trim().replaceAll(/\r\n?/g, "\n").split("\n");
+}
+
 type Cache = {
   path: string;
   mtime: number;
@@ -192,43 +197,28 @@ export class Source extends BaseSource<Params> {
     return { items, isIncomplete };
   }
 
-  #decoder = new TextDecoder();
-  decode(u: Uint8Array): string {
-    return this.#decoder.decode(u);
-  }
-
   getPreviewer({
     item,
     sourceParams: params,
   }: GetPreviewerArguments<Params>): Previewer {
     const contents = item.info ? [item.info] : [];
     if (params.documentCommand.length > 0) {
-      const command = params.documentCommand
-        .map((c) => c === "{{word}}" ? item.word : c);
+      const command = params.documentCommand.map((c) =>
+        c.replaceAll(
+          /\${item\.(\w+)}/g,
+          (_, p1) => String(item[p1 as keyof typeof item] ?? ""),
+        )
+      );
       const { stdout, stderr } = new Deno.Command(command[0], {
         args: command.slice(1),
       }).outputSync();
       if (stdout.length > 0) {
-        return {
-          kind: "text",
-          contents: [
-            ...contents,
-            ...this.decode(stdout).trim().split("\n"),
-          ],
-        };
+        contents.push(...splitLines(stdout));
       } else if (stderr.length > 0) {
-        return {
-          kind: "text",
-          contents: [
-            "Error:",
-            ...this.decode(stderr).trim().split("\n"),
-          ],
-        };
+        contents.push("Error:", ...splitLines(stderr));
       }
-    } else if (contents.length > 0) {
-      return { kind: "text", contents };
     }
-    return { kind: "empty" };
+    return { kind: "text", contents };
   }
 
   params(): Params {
