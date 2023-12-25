@@ -119,16 +119,14 @@ export class Source extends BaseSource<Params> {
         .pipeThrough(new TextDecoderStream())
         .pipeThrough(new TextLineStream());
       if (db != null) {
-        let atm = db.atomic();
-        let count = 0;
+        let [atm, count] = [db.atomic(), 0];
         for await (const line of lineStream) {
           for (const word of line.split(/\s+/)) {
             if (word !== "") {
               atm = atm.set([...word], word);
               if (++count >= 1000) {
                 await atm.commit();
-                atm = db.atomic();
-                count = 0;
+                [atm, count] = [db.atomic(), 0];
               }
             }
           }
