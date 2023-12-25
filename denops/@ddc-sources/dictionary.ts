@@ -48,7 +48,9 @@ export class Source extends BaseSource<Params> {
   async onInit({
     sourceParams: params,
   }: OnInitArguments<Params>): Promise<void> {
-    this.#db = await Deno.openKv(params.databasePath);
+    if (params.databasePath) {
+      this.#db = await Deno.openKv(params.databasePath);
+    }
   }
 
   events = ["Initialize", "InsertEnter"];
