@@ -108,7 +108,7 @@ export class Source extends BaseSource<Params> {
         for await (const line of lineStream) {
           for (const word of line.split(/\s+/)) {
             if (word !== "") {
-              atm = atm.set([...word], word);
+              atm = atm.set([path, "word", ...word], word);
               if (++count >= 1000) {
                 await atm.commit();
                 [atm, count] = [this.#db.atomic(), 0];
@@ -159,7 +159,9 @@ export class Source extends BaseSource<Params> {
         cache.trie.search(prefix).forEach((word) => items.push({ word, info }));
       } else if (this.#db) {
         for await (
-          const entry of cache.db.list<string>({ prefix: [...prefix] })
+          const entry of this.#db.list<string>({
+            prefix: [cache.path, "word", ...prefix],
+          })
         ) {
           items.push({ word: entry.value, info });
         }
