@@ -8,7 +8,7 @@ import {
   OnInitArguments,
   Previewer,
 } from "./deps/ddc.ts";
-import { TextLineStream } from "./deps/std.ts";
+import { dirname, ensureDir, TextLineStream } from "./deps/std.ts";
 import { Lock } from "./deps/async.ts";
 import Trie from "./lib/trie.ts";
 
@@ -54,6 +54,9 @@ export class Source extends BaseSource<Params> {
     sourceParams: params,
   }: OnInitArguments<Params>): Promise<void> {
     if (params.databasePath) {
+      const dir = dirname(params.databasePath);
+      // Deno.openKv throws when base directory doesn't exist
+      await ensureDir(dir);
       this.#db = await Deno.openKv(params.databasePath);
     }
   }
