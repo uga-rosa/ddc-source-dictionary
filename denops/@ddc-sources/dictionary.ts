@@ -8,6 +8,8 @@ import {
   OnInitArguments,
   Previewer,
 } from "./deps/ddc.ts";
+import { Denops } from "./deps/denops.ts";
+import { is } from "./deps/unknownutil.ts";
 import { TextLineStream } from "./deps/std.ts";
 import { Lock } from "./deps/async.ts";
 import Trie from "./lib/trie.ts";
@@ -51,10 +53,27 @@ export class Source extends BaseSource<Params> {
 
   #db?: Deno.Kv;
   async onInit({
+    denops,
     sourceParams: params,
   }: OnInitArguments<Params>): Promise<void> {
     if (params.databasePath) {
-      this.#db = await Deno.openKv(params.databasePath);
+      try {
+        this.#db = await Deno.openKv(params.databasePath);
+      } catch (e) {
+        await this.printError(denops, [
+          `Failed to open databasePath: ${params.databasePath}`,
+          String(e),
+        ]);
+      }
+    }
+  }
+
+  async printError(
+    denops: Denops,
+    msg: string | string[],
+  ): Promise<void> {
+    for (const m of is.Array(msg) ? msg : [msg]) {
+      await denops.call("ddc#util#print_error", m, "ddc-source-dictionary");
     }
   }
 
