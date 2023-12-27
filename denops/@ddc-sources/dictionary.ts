@@ -8,28 +8,16 @@ import {
   OnInitArguments,
   Previewer,
 } from "./deps/ddc.ts";
-import { Denops } from "./deps/denops.ts";
-import { is } from "./deps/unknownutil.ts";
 import { TextLineStream } from "./deps/std.ts";
 import { Lock } from "./deps/async.ts";
+import {
+  capitalize,
+  decapitalize,
+  printError,
+  same,
+  splitLines,
+} from "./lib/util.ts";
 import Trie from "./lib/trie.ts";
-
-function capitalize(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-function decapitalize(str: string): string {
-  return str.charAt(0).toLowerCase() + str.slice(1);
-}
-
-function same(x: unknown, y: unknown): boolean {
-  return JSON.stringify(x) === JSON.stringify(y);
-}
-
-const decoder = new TextDecoder();
-function splitLines(u: Uint8Array): string[] {
-  return decoder.decode(u).trim().replaceAll(/\r\n?/g, "\n").split("\n");
-}
 
 type Cache = {
   path: string;
@@ -60,20 +48,11 @@ export class Source extends BaseSource<Params> {
       try {
         this.#db = await Deno.openKv(params.databasePath);
       } catch (e) {
-        await this.printError(denops, [
+        await printError(denops, [
           `Failed to open databasePath: ${params.databasePath}`,
           String(e),
         ]);
       }
-    }
-  }
-
-  async printError(
-    denops: Denops,
-    msg: string | string[],
-  ): Promise<void> {
-    for (const m of is.Array(msg) ? msg : [msg]) {
-      await denops.call("ddc#util#print_error", m, "ddc-source-dictionary");
     }
   }
 
@@ -123,6 +102,7 @@ export class Source extends BaseSource<Params> {
         return;
       }
 
+      // Create cache
       let trie: Trie | undefined;
       const file = await Deno.open(path);
       const lineStream = file.readable
