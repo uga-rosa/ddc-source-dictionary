@@ -8,6 +8,8 @@ import {
   OnInitArguments,
   Previewer,
 } from "./deps/ddc.ts";
+import { lambda } from "./deps/denops.ts";
+import { is, u } from "./deps/unknownutil.ts";
 import {
   capitalize,
   decapitalize,
@@ -39,6 +41,15 @@ export class Source extends BaseSource<Params> {
     if (params.databasePath) {
       try {
         this.#dictionary = await KvDictionary.create(params.databasePath);
+        const id = lambda.register(denops, async (path: unknown) => {
+          u.assert(path, is.String);
+          await this.#dictionary.update(path, true);
+          await denops.cmd("echomsg 'database udpated:' l:path", { path });
+        });
+        await denops.cmd(
+          "command! -nargs=1 DdcSourceDictionaryForceUpdateDatabase " +
+            `:call denops#notify('${denops.name}', '${id}', [<q-args>])`,
+        );
       } catch (e) {
         await printError(denops, [
           `Failed to open databasePath: ${params.databasePath}`,
