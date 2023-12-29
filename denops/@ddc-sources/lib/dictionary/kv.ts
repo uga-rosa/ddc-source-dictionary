@@ -1,5 +1,4 @@
 import { Dictionary } from "./mod.ts";
-import { Lock } from "../../deps/async.ts";
 import { TextLineStream } from "../../deps/std.ts";
 import { Item } from "../../deps/ddc.ts";
 import { Kv } from "../kv.ts";
@@ -7,7 +6,6 @@ import { Kv } from "../kv.ts";
 export class KvDictionary implements Dictionary {
   #kv: Kv;
   #activePath: Map<string, boolean>;
-  #lock = new Lock(0);
 
   constructor(
     database: Deno.Kv,
@@ -49,9 +47,7 @@ export class KvDictionary implements Dictionary {
     for await (const line of lineStream) {
       for (const word of line.split(/\s+/)) {
         if (word !== "") {
-          await this.#lock.lock(() =>
-            this.#kv.atomSet([path, "word", ...word], word)
-          );
+          await this.#kv.atomSet([path, "word", ...word], word);
         }
       }
     }

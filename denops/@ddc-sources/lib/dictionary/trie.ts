@@ -1,7 +1,6 @@
 import { Dictionary } from "./mod.ts";
 import { TextLineStream } from "../../deps/std.ts";
 import { Item } from "../../deps/ddc.ts";
-import { Lock } from "../../deps/async.ts";
 import Trie from "../trie.ts";
 
 type Cache = {
@@ -13,7 +12,6 @@ type Cache = {
 
 export class TrieDictionary implements Dictionary {
   #caches: Map<string, Cache> = new Map();
-  #lock = new Lock(this.#caches);
 
   constructor() {}
 
@@ -32,7 +30,7 @@ export class TrieDictionary implements Dictionary {
   ): Promise<void> {
     const stat = await Deno.stat(path);
     const mtime = stat.mtime?.getTime();
-    const cache = await this.#lock.lock((caches) => caches.get(path));
+    const cache = this.#caches.get(path);
     if (!force && mtime && cache && cache.mtime === mtime) {
       cache.active = true;
       return;
@@ -50,13 +48,11 @@ export class TrieDictionary implements Dictionary {
       }
     }
 
-    await this.#lock.lock((caches) => {
-      caches.set(path, {
-        path,
-        mtime: mtime ?? -1,
-        active: true,
-        trie,
-      });
+    this.#caches.set(path, {
+      path,
+      mtime: mtime ?? -1,
+      active: true,
+      trie,
     });
   }
 
