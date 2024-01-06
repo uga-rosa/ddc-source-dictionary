@@ -1,12 +1,8 @@
 const Encoder = new TextEncoder();
-function encode(str: string): Uint8Array {
-  return Encoder.encode(str);
-}
-
 function calcKeySize(keys: string[]): number {
   let size = 0;
   for (const key of keys) {
-    const encoded = encode(key);
+    const encoded = Encoder.encode(key);
     size += encoded.reduce((acc, cur) => acc + (cur === 0x00 ? 2 : 1), 2);
   }
   return size;
