@@ -2,6 +2,11 @@
 
 Dictionary source for ddc.vim.
 
+How to load dictionaries:
+- Create Trie in memory (Default).
+- Local database using Deno KV (Need to set `param-databasePath`).
+- Search by grep each time (Need to set `param-grepCommand`).
+
 # Example
 
 ```vim
@@ -19,7 +24,6 @@ call ddc#custom#patch_global(#{
       \     firstCaseInsensitive: v:true,
       \     showPath: v:true,
       \     documentCommand: [ 'wn', '${item.word}', '-over' ],
-      \     databasePath: stdpath('data') . '/ddc-source-dictionary.sqlite3',
       \   },
       \ },
       \})
