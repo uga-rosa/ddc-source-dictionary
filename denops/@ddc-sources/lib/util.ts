@@ -18,6 +18,14 @@ export function splitLines(u: Uint8Array): string[] {
   return decoder.decode(u).trim().replaceAll(/\r\n?/g, "\n").split("\n");
 }
 
+export async function asyncFlatMap<T, U>(
+  list: T[],
+  callback: (x: T) => Promise<U[]>,
+): Promise<U[]> {
+  const nested = await Promise.all(list.map(callback));
+  return nested.flat(1);
+}
+
 export async function printError(
   denops: Denops,
   msg: string | string[],
