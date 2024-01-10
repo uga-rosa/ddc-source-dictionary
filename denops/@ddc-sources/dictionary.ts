@@ -19,6 +19,7 @@ import {
 } from "./lib/util.ts";
 import { Dictionary } from "./lib/dictionary/mod.ts";
 import { KvDictionary } from "./lib/dictionary/kv.ts";
+import { GrepDictionary } from "./lib/dictionary/grep.ts";
 import { TrieDictionary } from "./lib/dictionary/trie.ts";
 
 type Params = {
@@ -28,6 +29,7 @@ type Params = {
   showPath: boolean;
   documentCommand: string[];
   databasePath: string;
+  grepCommand: string[];
 };
 
 export class Source extends BaseSource<Params> {
@@ -56,6 +58,8 @@ export class Source extends BaseSource<Params> {
           String(e),
         ]);
       }
+    } else if (params.grepCommand.length > 0) {
+      this.#dictionary = new GrepDictionary(params.grepCommand);
     } else {
       this.#dictionary = new TrieDictionary();
     }
@@ -143,6 +147,7 @@ export class Source extends BaseSource<Params> {
       showPath: false,
       documentCommand: [],
       databasePath: "",
+      grepCommand: [],
     };
   }
 }
