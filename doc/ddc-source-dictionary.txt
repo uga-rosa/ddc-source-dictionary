@@ -102,21 +102,15 @@ databasePath		(string)
 	Default: ""
 
 
-				*ddc-source-dictionary-param-grepCommand*
-grepCommand		(string[])
+				*ddc-source-dictionary-param-externalCommand*
+externalCommand		(string[])
 	The command to search words. Enabled when databasePath is empty and
 	grepCommand is not empty. `${path}` will be replaced with the path of
 	the dictionary and `${prefix}` with the string to search.
 >vim
 	call ddc#custom#patch_global('sourceParams', #{
 	      \ dictionary: #{
-	      \   grepCommand: [
-	      \     'rg',
-	      \     '^${prefix}',
-	      \     '${path}',
-	      \     '--no-filename',
-	      \     '--no-line-number',
-	      \   ]
+	      \   externalCommand: [ 'look', '${prefix}', '${path}' ]
 	      \ },
 	      \})
 <

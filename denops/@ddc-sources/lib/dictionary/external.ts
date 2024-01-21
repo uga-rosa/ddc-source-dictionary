@@ -2,7 +2,7 @@ import { Dictionary } from "./mod.ts";
 import { asyncFlatMap, splitLines } from "../util.ts";
 import { Item } from "../../deps/ddc.ts";
 
-export class GrepDictionary implements Dictionary {
+export class ExternalDictionary implements Dictionary {
   #command: string[];
   #paths: string[] = [];
 
