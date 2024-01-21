@@ -5,7 +5,7 @@ Dictionary source for ddc.vim.
 How to load dictionaries:
 - Create Trie in memory (Default).
 - Local database using Deno KV (Need to set `param-databasePath`).
-- Search by grep each time (Need to set `param-grepCommand`).
+- Search by external command (e.g. `look`, `ripgrep`) each time (Need to set `param-externalCommand`).
 
 # Example
 
