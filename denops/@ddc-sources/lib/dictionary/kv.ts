@@ -64,10 +64,17 @@ export class KvDictionary implements Dictionary {
       if (!active) {
         continue;
       }
+      const exactlyMatch = await this.#kv.get<string>([
+        path,
+        "word",
+        ...prefix,
+      ]);
+      if (exactlyMatch !== null) {
+        items.push({ word: exactlyMatch, info: showPath ? path : "" });
+      }
       for await (
         const entry of this.#kv.list<string>({
           prefix: [path, "word", ...prefix],
-          start: [path, "word", ...prefix],
         })
       ) {
         items.push({ word: entry.value, info: showPath ? path : "" });
