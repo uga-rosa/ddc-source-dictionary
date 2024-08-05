@@ -7,20 +7,20 @@ import {
   OnEventArguments,
   OnInitArguments,
   Previewer,
-} from "./deps/ddc.ts";
-import { lambda } from "./deps/denops.ts";
-import { is, u } from "./deps/unknownutil.ts";
+} from "../@ddc-source-dictionary/deps/ddc.ts";
+import { lambda } from "../@ddc-source-dictionary/deps/denops.ts";
+import { is, u } from "../@ddc-source-dictionary/deps/unknownutil.ts";
 import {
   capitalize,
   decapitalize,
   printError,
   same,
   splitLines,
-} from "./lib/util.ts";
-import { Dictionary } from "./lib/dictionary/mod.ts";
-import { KvDictionary } from "./lib/dictionary/kv.ts";
-import { ExternalDictionary } from "./lib/dictionary/external.ts";
-import { TrieDictionary } from "./lib/dictionary/trie.ts";
+} from "../@ddc-source-dictionary/lib/util.ts";
+import { Dictionary } from "../@ddc-source-dictionary/lib/dictionary/mod.ts";
+import { KvDictionary } from "../@ddc-source-dictionary/lib/dictionary/kv.ts";
+import { ExternalDictionary } from "../@ddc-source-dictionary/lib/dictionary/external.ts";
+import { TrieDictionary } from "../@ddc-source-dictionary/lib/dictionary/trie.ts";
 
 type Params = {
   paths: string[];
